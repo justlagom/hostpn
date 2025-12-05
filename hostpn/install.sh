@@ -6,12 +6,15 @@ PORT="${PORT:-10008}"
 UUID="${UUID:-2584b733-9095-4bec-a7d5-62b473540f7a}"
 CADDY_PORT="8080" # Caddy 监听的回落端口
 
+# 假设脚本在 hostpn/ 目录下运行。
+# 所有的配置文件都在当前目录 (./) 下。
+
 # --- Xray Reality Setup ---
 
 # Create directory and navigate into it
 mkdir -p /home/container/xy
 cd /home/container/xy 
-# ‼️ 当前工作目录为 /home/container/xy，项目根目录文件路径为 ../filename
+# ‼️ 当前工作目录为 /home/container/xy，项目文件在脚本执行时的父目录
 
 # Download and extract Xray core
 echo "Downloading Xray v25.10.15..."
@@ -25,16 +28,14 @@ chmod +x xy
 ## ✅ 修改点 1: 复制本地 Xray 配置文件
 # ------------------------------------------------------------
 echo "Copying local Xray configuration file (xray-config.json)..."
-# 从根目录复制 xray-config.json 到当前目录，并重命名为 config.json
-cp ../xray-config.json config.json
+# 注意：假设脚本运行目录是 /home/container/hostpn，cd /home/container/xy 后，
+# 配置文件在父目录的 hostpn/ 下。这里使用 ../hostpn/ 来引用文件。
+cp ../hostpn/xray-config.json config.json
 
 # Replace PORT and UUID in the config file
 sed -i "s/10008/$PORT/g" config.json
 sed -i "s/YOUR_UUID/$UUID/g" config.json
 
-# ------------------------------------------------------------
-## ✅ 检查点: 密钥生成及检查
-# ------------------------------------------------------------
 # Generate X25519 key pair for Reality
 echo "Generating Reality key pair..."
 keyPair=$(./xy x25519)
@@ -45,14 +46,10 @@ shortId=$(openssl rand -hex 4)
 # ❗️ 密钥生成失败检查：如果 publicKey 为空，则退出并打印日志
 if [ -z "$publicKey" ]; then
     echo "============================================================"
-    echo "❌ 错误: Reality 公钥捕获失败！"
-    echo "请检查 Xray 二进制文件是否正常运行，或其输出格式是否符合预期。"
-    echo "Xray 密钥生成原始输出: "
-    echo "$keyPair"
+    echo "❌ 错误: Reality 公钥捕获失败！请检查 Xray 二进制文件是否正常运行。"
     echo "============================================================"
     exit 1
 fi
-echo "Reality Public Key successfully generated: $publicKey" # 打印成功信息
 
 # Replace keys and short ID in the config file
 sed -i "s/YOUR_PRIVATE_KEY/$privateKey/g" config.json
@@ -80,10 +77,10 @@ chmod +x caddy
 # 创建静态网页目录
 mkdir -p www
 
-# ✅ 修改点 2: 从父目录 (..) 复制 Caddy 配置和 index.html
-echo "Copying Caddyfile.template and index.html from project root..."
-cp ../index.html www/index.html
-cp ../Caddyfile.template Caddyfile
+# ✅ 修改点 2: 从父目录的 hostpn/ 子目录中复制文件
+echo "Copying Caddyfile.template and index.html from project subdirectory..."
+cp ../hostpn/index.html www/index.html
+cp ../hostpn/Caddyfile.template Caddyfile
 
 # 替换 Caddyfile 模板中的端口占位符
 sed -i "s/CADDY_PORT_PLACEHOLDER/$CADDY_PORT/g" Caddyfile
@@ -92,7 +89,7 @@ sed -i "s/CADDY_PORT_PLACEHOLDER/$CADDY_PORT/g" Caddyfile
 ## 🎯 步骤三：VLESS 链接生成和最终输出
 # ------------------------------------------------------------
 
-# Generate VLESS Reality share link (这里使用的 $publicKey 现在有检查确保不为空)
+# Generate VLESS Reality share link
 vlessUrl="vless://$UUID@$DOMAIN:$PORT?encryption=none&flow=xtls-rprx-vision&security=reality&sni=www.cloudflare.com&fp=chrome&pbk=$publicKey&sid=$shortId&spx=%2F&type=tcp&headerType=none#lunes-reality"
 
 # Save the generated URL to node.txt
