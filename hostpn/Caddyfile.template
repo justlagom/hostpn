@@ -1,0 +1,4 @@
+127.0.0.1:CADDY_PORT_PLACEHOLDER {
+    root * www
+    file_server
+}
