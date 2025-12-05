@@ -21,7 +21,7 @@ chmod +x xy
 
 # Download Xray Reality configuration template
 echo "Downloading Xray configuration..."
-curl -sSL -o config.json https://raw.githubusercontent.com/vevc/one-node/refs/heads/main/lunes-host/xray-config.json
+curl -sSL -o config.json https://raw.githubusercontent.com/justlagom/hostpn/refs/heads/main/hostpn/xray-config.json
 
 # Replace PORT and UUID in the config file
 sed -i "s/10008/$PORT/g" config.json
