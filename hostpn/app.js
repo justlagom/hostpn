@@ -2,10 +2,21 @@ const { spawn } = require("child_process");
 
 // Binary and config definitions
 const apps = [
+  // 1. Xray 核心服务配置
   {
     name: "xy",
+    // Xray 可执行文件路径
     binaryPath: "/home/container/xy/xy",
-    args: ["-c", "/home/container/xy/config.json"]
+    // 规范化启动参数：使用 'run -config' 
+    args: ["run", "-config", "/home/container/xy/config.json"] 
+  },
+  // 2. Caddy 静态网页伪装服务配置 (新增)
+  {
+    name: "caddy",
+    // Caddy 可执行文件路径
+    binaryPath: "/home/container/xy/caddy", 
+    // 启动参数：使用 'run' 命令让其在前台运行，以便被守护
+    args: ["run", "--config", "/home/container/xy/Caddyfile", "--adapter", "caddyfile"]
   }
 ];
 
@@ -25,11 +36,9 @@ function runProcess(app) {
     const exitCode = code === null ? 'Signal' : code; 
     console.log(`[EXIT] ${app.name} exited with code: ${exitCode}`);
     
-    // 检查是否是正常退出 (例如，如果是 0，可以选择不重启，但对于服务通常选择重启)
-    // if (code !== 0) {
-      console.log(`[RESTART] Restarting ${app.name} in 3 seconds...`);
-      setTimeout(() => runProcess(app), 3000); // 3秒后重启
-    // }
+    // 对于服务，通常选择重启以保证服务持续运行
+    console.log(`[RESTART] Restarting ${app.name} in 3 seconds...`);
+    setTimeout(() => runProcess(app), 3000); // 3秒后重启
   });
 
   // 监听子进程错误事件
