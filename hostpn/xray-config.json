@@ -49,29 +49,11 @@
       }
     }
   ],
-  "routing": {
-    "rules": [
-      {
-        "type": "field",
-        "domain": [
-          "v.com"
-        ],
-        "outboundTag": "force-to-ip"
-      }
-    ]
-  },
   "outbounds": [
     {
       "protocol": "freedom",
       "settings": {
-        "domainStrategy":"UseIP"
-      }
-    },
-    {
-      "tag": "force-to-ip",
-      "protocol": "freedom",
-      "settings": {
-        "redirect": "127.0.0.1:0"
+        "domainStrategy": "UseIP"
       }
     }
   ]
