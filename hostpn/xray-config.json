@@ -2,41 +2,77 @@
   "log": {
     "loglevel": "warning"
   },
+  "dns": {
+    "servers": [
+      "1.1.1.1",
+      "8.8.8.8"
+    ]
+  },
   "inbounds": [
-    {
-      "port": 10008,
+       {
+      "listen": 127.0.0.1,
+      "port": 8080,
       "protocol": "vless",
       "settings": {
         "clients": [
           {
-            "id": "YOUR_UUID",
+            "email": "ng-xhttp",
             "flow": "xtls-rprx-vision",
-            "email": "lunes-reality"
+            "id": "UUID"
           }
         ],
-        "decryption": "none"
+        "decryption": "mlkem768x25519plus.native.600s.IASRX3nSekp4w75a13lfrUlfcPkigvk39yETGzU3gHc",
+        "encryption": "mlkem768x25519plus.native.0rtt.fRLKjkBNx1N6ceiqcqilb46WNj4yvl4SgXklAFkvNhE",
+        "selectedAuth": "X25519, not Post-Quantum"
       },
       "streamSettings": {
-        "network": "tcp",
-        "security": "reality",
-        "realitySettings": {
-          "show": false,
-          "dest": "www.java.com:443",
-          "xver": 0,
-          "serverNames": [
-            "www.java.com"
-          ],
-          "privateKey": "YOUR_PRIVATE_KEY",
-          "shortIds": [
-            "YOUR_SHORT_ID"
-          ]
+        "network": "xhttp",
+        "security": "none",
+        "xhttpSettings": {
+          "headers": {},
+          "host": "",
+          "mode": "auto",
+          "noSSEHeader": false,
+          "path": "/b3a053a4",
+          "scMaxBufferedPosts": 30,
+          "scMaxEachPostBytes": "1000000",
+          "scStreamUpServerSecs": "20-80",
+          "xPaddingBytes": "100-1000"
         }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls"
+        ]
       }
     }
   ],
+  "routing": {
+    "rules": [
+      {
+        "type": "field",
+        "domain": [
+          "v.com"
+        ],
+        "outboundTag": "force-to-ip"
+      }
+    ]
+  },
   "outbounds": [
     {
-      "protocol": "freedom"
+      "protocol": "freedom",
+      "settings": {
+        "domainStrategy":"UseIP"
+      }
+    },
+    {
+      "tag": "force-to-ip",
+      "protocol": "freedom",
+      "settings": {
+        "redirect": "127.0.0.1:0"
+      }
     }
   ]
 }
