@@ -5,15 +5,14 @@ const path = require("path");
 // --- Configuration Variables ---
 // 从环境变量中读取 NGINX 暴露端口，如果未设置则默认为 443
 const NGINX_PORT = process.env.NGINX_PORT || "443";
-// Xray 配置的 Path，必须与 Xray 配置中的 path 字段一致
+// Xray 配置的 Path
 const XHTTP_PATH = process.env.XHTTP_PATH || "/b3a053a4"; 
-// Nginx 监听的内部回落端口（与 Xray 配置中的 Fallback 目标保持一致）
+// Nginx 监听的内部回落端口
 const XRAY_INBOUND_PORT = "8080"; 
 
-// Nginx 配置文件的路径
-const NGINX_CONF_PATH = "/home/container/xy/nginx.conf";
-// Nginx 配置模板路径 (假设 install.sh 已经将其复制到 /home/container/xy/)
-const NGINX_CONF_TEMPLATE_PATH = "/home/container/xy/nginx.conf.template";
+// ⚠️ 关键修改 1: Nginx 配置文件名和路径
+const NGINX_CONF_PATH = "/home/container/xy/nginx.conf"; // 最终生成的 Nginx 配置
+const NGINX_CONF_TEMPLATE_PATH = "/home/container/xy/nginx.conf"; // install.sh 复制到此处的模板
 
 
 // Binary and config definitions
@@ -27,9 +26,7 @@ const apps = [
     // 2. Nginx 反代和静态网页服务配置
     {
         name: "nginx",
-        // Nginx 可执行文件路径 (请根据您的运行环境调整，这里使用常见的 /usr/sbin/nginx)
         binaryPath: "/usr/sbin/nginx", 
-        // 启动参数：使用 -c 指定配置文件，并用 -g "daemon off;" 确保它在前台运行
         args: ["-c", NGINX_CONF_PATH, "-g", "daemon off;"]
     }
 ];
@@ -39,7 +36,6 @@ const apps = [
  */
 function runProcess(app) {
     const child = spawn(app.binaryPath, app.args, { stdio: "inherit" });
-
     console.log(`[START] Started process: ${app.name} (PID: ${child.pid})`);
 
     child.on("exit", (code) => {
@@ -47,7 +43,7 @@ function runProcess(app) {
         console.log(`[EXIT] ${app.name} exited with code: ${exitCode}`);
         
         console.log(`[RESTART] Restarting ${app.name} in 3 seconds...`);
-        setTimeout(() => runProcess(app), 3000); // 3秒后重启
+        setTimeout(() => runProcess(app), 3000); 
     });
 
     child.on("error", (err) => {
@@ -73,7 +69,7 @@ function configureNginx() {
     templateContent = templateContent.replace(/XRAY_INBOUND_PORT_PLACEHOLDER/g, XRAY_INBOUND_PORT);
     templateContent = templateContent.replace(/XHTTP_PATH_PLACEHOLDER/g, XHTTP_PATH);
 
-    // 将最终内容写入到 Nginx 配置文件路径
+    // ⚠️ 关键修改 2: 写入最终配置文件 (模板名和最终名一致)
     fs.writeFileSync(NGINX_CONF_PATH, templateContent);
 
     console.log(`[CONFIG] Nginx configuration written to ${NGINX_CONF_PATH}.`);
@@ -82,10 +78,7 @@ function configureNginx() {
 // Main execution
 function main() {
     try {
-        // 1. 在启动服务前，先生成 Nginx 配置文件
         configureNginx();
-
-        // 2. 遍历 apps 数组，启动所有配置的服务
         for (const app of apps) {
             runProcess(app);
         }
